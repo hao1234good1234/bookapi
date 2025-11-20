@@ -1,0 +1,102 @@
+# ========================
+# Windows 系统文件
+# ========================
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# ========================
+# Python 虚拟环境（必加！）
+# ========================
+venv/
+ENV/
+env/
+.env
+.venv
+pyvenv.cfg
+pip-selfcheck.json
+
+# Python 字节码
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Python 分发包
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# ========================
+# Django / DRF
+# ========================
+# 数据库（SQLite）
+db.sqlite3
+db.sqlite3-journal
+
+# 敏感配置文件（绝对不要提交！）
+*.local.py
+settings/local.py
+.env
+.env.local
+.env.*.local
+
+# 媒体与静态文件（通常不提交）
+/media/
+/staticfiles/
+/static/
+
+# 日志文件
+*.log
+
+# 本地开发服务器 PID
+django.pid
+
+# ========================
+# IDE / 编辑器（Windows 常用）
+# ========================
+# PyCharm
+.idea/
+*.iml
+
+# VS Code
+.vscode/
+.history/
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim / Neovim (Windows 也可能用)
+*.swp
+*.swo
+
+# ========================
+# 测试 & 工具
+# ========================
+.coverage
+htmlcov/
+.pytest_cache/
+.ipynb_checkpoints
+.mypy_cache/
+
+# ========================
+# 其他临时文件
+# ========================
+tmp/
+temp/
+*.tmp
