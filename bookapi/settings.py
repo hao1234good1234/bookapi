@@ -29,7 +29,7 @@ ALLOWED_HOSTS = []
 
 
 # Application definition
-
+#`INSTALLED_APPS` 就像“启用插件”，只有在这里登记过的 App，Django 才会加载它的代码。
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework', #配置 Django 启用 DRF
+    'books', # 配置自定义的app
 ]
 
 MIDDLEWARE = [

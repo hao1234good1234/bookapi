@@ -15,11 +15,13 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
-from . import views # 导入当前目录的 views
+from django.urls import path, include
+# from . import views # 导入当前目录的 views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/hello', views.hello_api), #新增api路由
-    path('api/hello-class/', views.HelloAPIView.as_view()), # 注意这里是 as_view()
+    # path('api/hello', views.hello_api), #新增api路由
+    # path('api/hello-class/', views.HelloAPIView.as_view()), # 注意这里是 as_view()
+
+    path('api/', include('books.urls')),  # 把books的路由包含进来
 ]
