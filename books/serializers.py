@@ -23,7 +23,10 @@ class BookSerializer(serializers.ModelSerializer):
 
     # 对象级验证：validate()
     def validate(self, data):
-        if data['author'] == "吴承恩" and data['price'] > 100:
+        # 使用 .get() 避免 KeyError
+        author = data.get('author')
+        price = data.get('price')
+        if author == "吴承恩" and price is not None and price > 100:
             raise serializers.ValidationError("吴承恩的书不能高于100元")
         return data
 
