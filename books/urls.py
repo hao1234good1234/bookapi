@@ -11,10 +11,17 @@ from rest_framework.routers import DefaultRouter
 #   - `PUT /books/1/`
 #   - `DELETE /books/1/`
 #   - 还有额外的 API 文档页面！
-# 创建路由器
+
+
+# 1、创建路由器实例，确保项目中有viewset，因为 Router 是为 ViewSet 设计的！
 router = DefaultRouter()
-# 注册ViewSet，books-view-set是api的路由前缀，/api/books-view-set/1/
-router.register(r'books-view-set', viewset=views.BookViewSet)
+# 2、注册ViewSet，books是api的路由前缀，比如：/api/books/1/
+# `router.register()`：注册 ViewSet 到某个前缀
+#`r'books'` 是原始字符串，避免转义问题
+# **不要写成 `'books/'`**（结尾不要 `/`）
+router.register(r'books', viewset=views.BookViewSet)
+
+
 
 
 
@@ -24,7 +31,8 @@ urlpatterns = [
     # CBV 类视图
     path('books-cbv/', views.BookList.as_view(), name='book-list-cbv'),
     path('books-generic/', views.BookListCreate.as_view(), name='book-list-generic'),
-    path('books/<int:pk>/', views.BookDetail.as_view(), name='book-detail'), #💡 `<int:pk>`：Django 的路径转换器，表示“这里是一个整数，变量名叫 pk”
+    path('books-detail/<int:pk>/', views.BookDetail.as_view(), name='book-detail'), #💡 `<int:pk>`：Django 的路径转换器，表示“这里是一个整数，变量名叫 pk”
+    # `include(router.urls)` 会自动包含所有子路由，URL: http://127.0.0.1:8000/api/books/1/
     path('', include(router.urls)), # 包含所有自动生成的路由，包含：get获取全部图书，post添加图书，get/put/delete/patch单个图书获取或修改
 
 

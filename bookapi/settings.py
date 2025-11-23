@@ -123,3 +123,18 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# DRF设置全局分页，所有 ViewSet 自动生效。
+# 这样设置后，**所有继承 `ListModelMixin` 的视图**（如 `ModelViewSet`）都会自动分页！
+REST_FRAMEWORK = {
+    # Web 网站（页码导航）设置分页
+    # http://127.0.0.1:8000/api/books/
+    'DEFAULT_PAGINATION_CLASS': "rest_framework.pagination.PageNumberPagination", #指定默认分页类
+    # 移动端 App（滑动加载）设置分页
+    # http://127.0.0.1:8000/api/books/?limit=5&offset=10
+    # | `limit=5`   | 最多返回5条                |
+    # | `offset=10` | 跳过前10条（从第11条开始） |
+    # 'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
+    'PAGE_SIZE': 5, # 每页返回多少条数据
+}
+

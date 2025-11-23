@@ -12,6 +12,8 @@ class Book(models.Model):
     # `DateField` 表示“日期”，格式是 `YYYY-MM-DD`。
     published_date = models.DateField(verbose_name="出版日期")  # 出版日期 比如：2024-02-03
 
+    is_highlighted = models.BooleanField(default=False, verbose_name="是否高亮")
+
 
     # 这是一个“魔法方法”，当你在 Django 后台或打印对象时，会显示书名而不是 `<Book object>`。
     def __str__(self):
