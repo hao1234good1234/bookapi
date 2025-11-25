@@ -9,6 +9,14 @@ from rest_framework.views import APIView
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.viewsets import ModelViewSet
 from .pagination import StandardResultsSetPagination
+from .filters import BookFilter
+from rest_framework.permissions import IsAuthenticated # 导入“仅认证用户可访问”的权限类
+from rest_framework.permissions import IsAuthenticatedOrReadOnly # 登录用户可读写，匿名用户只读
+from rest_framework.permissions import IsAdminUser # 只允许管理员访问
+from .permissions import IsOwnerOrReadonly
+
+
+
 
 # 这个是函数视图（Function-based Views (FBV) ），函数视图用@api_view()
 # **优点**：简单直观，适合小功能
@@ -110,6 +118,62 @@ class BookViewSet(ModelViewSet):
     queryset = Book.objects.all()
     serializer_class = BookSerializer
     pagination_class = StandardResultsSetPagination # 指定自定义分页类，如果全局设置了分页，这里会 **覆盖全局设置**！
+    filterset_class = BookFilter   # 使用自定义的过滤器
+
+
+    # 权限控制
+    # permission_classes = [IsAuthenticated]  # 强制登录才能访问，告诉 DRF：只有登录用户才能调用这个 ViewSet 的任何操作
+    # permission_classes = [IsAuthenticatedOrReadOnly] # ← 匿名可读，登录可写
+    # permission_classes = [IsAdminUser] # 只允许管理员访问
+    permission_classes = [
+        IsAuthenticated, # 先检查是否登录
+        IsOwnerOrReadonly,          # 再检查是否是作者
+    ]
+
+    # 如何在创建图书时自动设置owner
+    # `perform_create` 是 DRF 提供的钩子方法，在保存对象前调用。
+    def perform_create(self, serializer):
+        # 自动将当前登录用户设置为owner
+        serializer.save(owner=self.request.user)
+
+    # - get_queryset这是 DRF `ModelViewSet` 的核心方法之一。
+    # - 它决定了 **列表（list）和详情（retrieve）接口返回哪些数据**。
+    def get_queryset(self):
+        # 防御：未认证用户返回空（避免 TypeError）
+        if not self.request.user.is_authenticated:
+            return Book.objects.none()
+        # 如果你的 `Book` 模型经常需要显示 `owner.username`，可以优化数据库查询：
+        # `select_related('owner')` 会在一次 SQL 中 JOIN 用户表，避免 N+1 查询问题。
+        queryset = Book.objects.select_related('owner') # 减少数据库查询次数
+        if self.request.user.is_staff:
+            return queryset
+        return queryset.filter(owner = self.request.user)
+
+    # === 1. 过滤字段（支持 ?author=张三&price=39.90）===
+    # **作用**：允许客户端通过 URL 参数 **精确匹配** 这两个字段
+    # URL示例：`GET /api/books/?author=张三&price=39.90`
+    # 底层SQL：SELECT * FROM books WHERE author = '张三' AND price = 39.90;
+    # ⚠️ 注意：`price` 是字符串比较！如果传 `price=40`，但数据库是 `40.00`，可能不匹配。
+    # filterset_fields = ['price', 'author']
+
+    # === 2. 搜索字段（支持 ?search=关键词）===
+    # - **作用**：启用全文搜索，使用 `?search=关键词`
+    # - **匹配方式**：默认是 **“包含”**（icontains）
+    # URL示例：`GET /api/books/?search=Python` → 匹配《Python入门》《高级Python》等
+    # 底层SQL：WHERE title ILIKE '%Python%' OR author ILIKE '%Python%';
+    # > 💡 高级用法（可选）：
+    # > - `^title` → 以...开头（startswith）
+    # > - `=title` → 精确匹配（exact）
+    # > - `@title` → 全文搜索（需 PostgreSQL）
+    search_fields = ['title', 'author']
+
+    # === 3. 排序字段（支持 ?ordering=price 或 ?ordering=-price）===
+    # **作用**：允许客户端按这些字段排序
+    # URL示例：
+    # - `?ordering=-price` → 降序（贵到便宜）
+    # - `?ordering=published_date` → 按出版日期升序
+    ordering_fields = ['price', 'published_date']
+    ordering = ['id']   # 默认排序规则，如果用户没传 `ordering`，就按 `id` 升序返回
 
     # `@action`：添加自定义操作Router，自动识别，无需手动路由，给viewset加一个额外的操作
     # `@action(detail=False)`：表示这个操作不针对单个对象（URL 是 `/books/recent/`）

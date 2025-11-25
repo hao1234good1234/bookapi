@@ -16,6 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 # from . import views # 导入当前目录的 views
 
 urlpatterns = [
@@ -24,4 +25,13 @@ urlpatterns = [
     # path('api/hello-class/', views.HelloAPIView.as_view()), # 注意这里是 as_view()
 
     path('api/', include('books.urls')),  # 把books的路由包含进来
+
+    # JWT 认证路由，这两个视图是 `simplejwt` 自动提供的，无需自己写！
+    # | 配置                  | 说明                                                         |
+    # | --------------------- | ------------------------------------------------------------ |
+    # | `TokenObtainPairView` | 用户 POST 用户名/密码，返回 `{access: "...", refresh: "..."}` |
+    # | `TokenRefreshView`    | 用户 POST `refresh` token，返回新的 `access` token           |
+    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+
 ]

@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User
 
 # Create your models here.
 # 定义一个叫 `Book` 的类，它继承自 `models.Model` → 表示这是一个数据库表。
@@ -13,7 +14,13 @@ class Book(models.Model):
     published_date = models.DateField(verbose_name="出版日期")  # 出版日期 比如：2024-02-03
 
     is_highlighted = models.BooleanField(default=False, verbose_name="是否高亮")
-
+    # | 部分                | 含义                                 |
+    # | ------------------- | ------------------------------------ |
+    # | `owner`             | 字段名，代表“这本书的拥有者”         |
+    # | `ForeignKey(User)`  | 关联到 Django 的用户模型             |
+    # | `on_delete=CASCADE` | 用户删除时，自动删除其所有图书       |
+    # | `null=True`         | 允许数据库中该字段为空（兼容旧数据） |
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
 
     # 这是一个“魔法方法”，当你在 Django 后台或打印对象时，会显示书名而不是 `<Book object>`。
     def __str__(self):

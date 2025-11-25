@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+from datetime import timedelta
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -38,6 +40,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework', #配置 Django 启用 DRF
+    'rest_framework_simplejwt', #配置 Django 启用 JWT
+    'django_filters', #配置 Django 启用 django_filters
     'books', # 配置自定义的app
 ]
 
@@ -136,5 +140,32 @@ REST_FRAMEWORK = {
     # | `offset=10` | 跳过前10条（从第11条开始） |
     # 'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
     'PAGE_SIZE': 5, # 每页返回多少条数据
+
+    # 配置默认过滤后端
+    'DEFAULT_FILTER_BACKENDS': [
+        'django_filters.rest_framework.DjangoFilterBackend',  #字段精确过滤（如 `?author=张三`）
+        'rest_framework.filters.SearchFilter',              #全文搜索（如 `?search=Python`）
+        'rest_framework.filters.OrderingFilter',            #排序（如 `?ordering=price`）
+
+    ],
+    #
+    # === 全局配置认证后端 ===
+    # 注意：`DEFAULT_AUTHENTICATION_CLASSES` 是一个列表，可以同时支持多种认证方式！DRF 会按顺序尝试每种认证方式，直到成功
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        # 'rest_framework.authentication.SessionAuthentication', #`启用基于 Session 的认证（浏览器登录后自动携带 Cookie）
+        'rest_framework_simplejwt.authentication.JWTAuthentication', # 自动解析请求头中的 `Authorization: Bearer <access_token>`
+    ],
+    # === 全局配置默认权限 ===
+    #  注意：这是**全局设置**，除非某个视图显式覆盖，否则所有接口都必须登录！
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated', # 默认所有接口都需要登录
+    ]
 }
 
+# 配置JWT
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15), # access token 有效期
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1), # refresh token 有效期
+    'ROTATE_REFRESH_TOKENS': False,         # 刷新时是否换新 refresh token
+    'BLACKLIST_AFTER_ROTATION':False,       # 是否拉黑旧 refresh token
+}
