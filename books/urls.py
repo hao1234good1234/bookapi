@@ -20,6 +20,8 @@ router = DefaultRouter()
 #`r'books'` 是原始字符串，避免转义问题
 # **不要写成 `'books/'`**（结尾不要 `/`）
 router.register(r'books', viewset=views.BookViewSet)
+router.register(r'authors', viewset=views.AuthorViewSet)
+router.register(r'tags', viewset=views.TagViewSet)
 
 
 

@@ -3,8 +3,8 @@ from pickle import FALSE
 from rest_framework.decorators import api_view, action
 from rest_framework.response import Response
 from rest_framework import status
-from .models import Book
-from .serializers import BookSerializer
+from .models import Book, Author, Tag
+from .serializers import BookSerializer, AuthorSerializer, TagSerializer
 from rest_framework.views import APIView
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.viewsets import ModelViewSet
@@ -224,4 +224,16 @@ class BookViewSet(ModelViewSet):
         # 3. 返回更新后的数据
         serializer = self.get_serializer(book)
         return Response(serializer.data, status= status.HTTP_200_OK)
+
+# author对应的viewset
+class AuthorViewSet(ModelViewSet):
+    queryset = Author.objects.all()
+    serializer_class = AuthorSerializer
+
+
+class TagViewSet(ModelViewSet):
+    queryset = Tag.objects.all()
+    serializer_class = TagSerializer
+
+
 
