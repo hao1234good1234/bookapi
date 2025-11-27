@@ -152,14 +152,39 @@ REST_FRAMEWORK = {
     # === 全局配置认证后端 ===
     # 注意：`DEFAULT_AUTHENTICATION_CLASSES` 是一个列表，可以同时支持多种认证方式！DRF 会按顺序尝试每种认证方式，直到成功
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        # 'rest_framework.authentication.SessionAuthentication', #`启用基于 Session 的认证（浏览器登录后自动携带 Cookie）
+        'rest_framework.authentication.SessionAuthentication', #`启用基于 Session 的认证（浏览器登录后自动携带 Cookie）
         'rest_framework_simplejwt.authentication.JWTAuthentication', # 自动解析请求头中的 `Authorization: Bearer <access_token>`
     ],
     # === 全局配置默认权限 ===
     #  注意：这是**全局设置**，除非某个视图显式覆盖，否则所有接口都必须登录！
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated', # 默认所有接口都需要登录
-    ]
+    ],
+    # === 新增：全局默认限流 ===
+    # `'DEFAULT_THROTTLE_CLASSES'`设置全局使用的限流类 只有被列出的限流类才会生效
+    'DEFAULT_THROTTLE_CLASSES': [
+        # `'AnonRateThrottle'`匿名用户限流类 对未登录用户生效⚠️ 需配合 `DEFAULT_THROTTLE_RATES`
+        'rest_framework.throttling.AnonRateThrottle', # 匿名用户限流
+
+        # `'UserRateThrottle'`登录用户限流类 对已登录用户生效✅ 常用于普通用户
+        # 'rest_framework.throttling.UserRateThrottle', # 登录用户限流
+
+        # 如果使用官方原生的限流类，匿名限流规则能成功，使用自定义限流规则之后，匿名用户限流规则就失效了
+        'books.throttling.AdminUserThrottle', # 使用自定义限流类
+
+    ],
+    # `'DEFAULT_THROTTLE_RATES'`定义速率规则 指定每个限流类的具体速度✅ 必须和上面对应
+    'DEFAULT_THROTTLE_RATES': {
+        # `'anon': '5/hour'`匿名用户每小时5次 格式：数字 + / + 时间单位✅ 单位：second, minute, hour, day
+        'anon': '5/hour',   # 匿名用户每小时5次
+        # `'user': '10/minute'`登录用户每分钟10次 更宽松，适合正常用户✅ 支持小数，如 `3.5/minute`
+        'user': '10/minute',# 登录用户每分钟10次
+        # 管理员可以高速访问
+        # 'admin': '1000/minute', #管理员每分钟1000次
+
+
+    },
+
 }
 
 # 配置JWT
@@ -169,3 +194,4 @@ SIMPLE_JWT = {
     'ROTATE_REFRESH_TOKENS': False,         # 刷新时是否换新 refresh token
     'BLACKLIST_AFTER_ROTATION':False,       # 是否拉黑旧 refresh token
 }
+

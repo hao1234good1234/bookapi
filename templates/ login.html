@@ -1,0 +1,42 @@
+<!-- templates/login.html -->
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>{% if user.is_authenticated %}已登录{% else %}用户登录{% endif %}</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 50px; }
+        .form { max-width: 400px; margin: auto; padding: 20px; border: 1px solid #ccc; border-radius: 8px; }
+        .error { color: red; margin-bottom: 10px; }
+        .success { color: green; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+{% if user.is_authenticated %}
+    <!-- 已登录：显示欢迎信息和登出按钮 -->
+    <div class="form">
+        <h2>你好，{{ user.username }}！</h2>
+        <p>你已成功登录。</p>
+        <a href="/logout/" style="color: white; background: #d9534f; padding: 8px 16px; text-decoration: none; border-radius: 4px;">登出</a>
+        <br><br>
+        <a href="/api/books/">查看图书列表</a>
+    </div>
+{% else %}
+    <!-- 未登录：显示登录表单 -->
+    <div class="form">
+        <h2>普通用户登录</h2>
+        {% if messages %}
+            <div class="error">{% for message in messages %}{{ message }}{% endfor %}</div>
+        {% endif %}
+        <form method="post">
+            {% csrf_token %}
+            <p><label>用户名：</label><input type="text" name="username"></p>
+            <p><label>密码：</label><input type="password" name="password"></p>
+            <button type="submit">登录</button>
+        </form>
+    </div>
+{% endif %}
+
+</body>
+</html>

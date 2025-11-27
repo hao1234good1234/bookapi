@@ -17,7 +17,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-# from . import views # 导入当前目录的 views
+from . import views # 导入当前目录的 views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -33,5 +33,11 @@ urlpatterns = [
     # | `TokenRefreshView`    | 用户 POST `refresh` token，返回新的 `access` token           |
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    # 登录页面
+    path('login/', views.user_login, name='login'),
+    # 登出页面
+    path('logout/', views.user_logout, name='logout'),
+
+
 
 ]

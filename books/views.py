@@ -14,6 +14,7 @@ from rest_framework.permissions import IsAuthenticated # 导入“仅认证用�
 from rest_framework.permissions import IsAuthenticatedOrReadOnly # 登录用户可读写，匿名用户只读
 from rest_framework.permissions import IsAdminUser # 只允许管理员访问
 from .permissions import IsOwnerOrReadonly
+from .throttling import AdminUserThrottle
 
 
 
@@ -125,10 +126,18 @@ class BookViewSet(ModelViewSet):
     # permission_classes = [IsAuthenticated]  # 强制登录才能访问，告诉 DRF：只有登录用户才能调用这个 ViewSet 的任何操作
     # permission_classes = [IsAuthenticatedOrReadOnly] # ← 匿名可读，登录可写
     # permission_classes = [IsAdminUser] # 只允许管理员访问
+    # permission_classes = [
+    #     IsAuthenticated,            # 先检查是否登录
+    #     IsOwnerOrReadonly,          # 再检查是否是作者
+    # ]
     permission_classes = [
-        IsAuthenticated, # 先检查是否登录
-        IsOwnerOrReadonly,          # 再检查是否是作者
+        IsAuthenticatedOrReadOnly,   # 未登录
+        # IsOwnerOrReadonly,  # 再检查是否是作者
     ]
+
+    # throttle_classes = [AdminUserThrottle]  # 使用自定义限流类
+
+
 
     # 如何在创建图书时自动设置owner
     # `perform_create` 是 DRF 提供的钩子方法，在保存对象前调用。
