@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 from datetime import timedelta
+import os
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -194,4 +195,15 @@ SIMPLE_JWT = {
     'ROTATE_REFRESH_TOKENS': False,         # 刷新时是否换新 refresh token
     'BLACKLIST_AFTER_ROTATION':False,       # 是否拉黑旧 refresh token
 }
+
+# 配置媒体文件（上传文件）路径
+# | 配置项       | 作用                               | 示例                                |
+# | ------------ | ---------------------------------- | ----------------------------------- |
+# | `MEDIA_URL`  | 前端访问上传文件的**URL前缀**      | `/media/`                           |
+# | `MEDIA_ROOT` | 服务器上实际存放文件的**本地路径** | `E:\Projects\pycharm\bookapi\media` |
+# 💡 例如：
+# - 上传文件 → 存到 `media/covers/1/cover.jpg`
+# - 前端访问 → `http://127.0.0.1:8000/media/covers/1/cover.jpg`
+MEDIA_URL = '/media/'  # 前端访问时用的URL路径
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')  # 实际文件存储路径
 

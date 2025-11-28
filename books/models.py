@@ -49,7 +49,21 @@ class Book(models.Model):
     # | `on_delete=CASCADE` | 用户删除时，自动删除其所有图书       |
     # | `null=True`         | 允许数据库中该字段为空（兼容旧数据） |
     owner = models.ForeignKey(User, on_delete=models.CASCADE, null=True, verbose_name="拥有者")
-
+    # | 代码                      | 解释                                                         |
+    # | ------------------------- | ------------------------------------------------------------ |
+    # | `models.ImageField(...)`  | 专门用于上传图片的字段类型，继承自 `FileField`               |
+    # | `upload_to='covers/'`     | 指定上传文件存储的**子目录**，比如：`media/covers/1/cover.jpg` |
+    # | `blank=True`              | 表单中可以不填（前端可选）                                   |
+    # | `null=True`               | 数据库中允许为 `NULL`（不是空字符串）                        |
+    # | `verbose_name="封面图片"` | 管理后台显示的名字                                           |
+    # 新增图片字段
+    # 💡 `ImageField` 会自动验证上传的是不是图片（jpg/png/gif），而 `FileField` 只检查是不是文件。
+    cover_image = models.ImageField(
+        upload_to='covers/', # 文件上传路径
+        blank=True,         # 允许为空
+        null=True,          # 数据库允许为空
+        verbose_name='封面图片'
+    )
     # 这是一个“魔法方法”，当你在 Django 后台或打印对象时，会显示书名而不是 `<Book object>`。
     def __str__(self):
         return self.title # 在后台显示书名，而不是“Book object”

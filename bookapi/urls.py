@@ -18,7 +18,8 @@ from django.contrib import admin
 from django.urls import path, include
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from . import views # 导入当前目录的 views
-
+from django.conf import settings
+from django.conf.urls.static import static
 urlpatterns = [
     path('admin/', admin.site.urls),
     # path('api/hello', views.hello_api), #新增api路由
@@ -41,3 +42,12 @@ urlpatterns = [
 
 
 ]
+
+# | 代码                                                         | 作用                                             |
+# | ------------------------------------------------------------ | ------------------------------------------------ |
+# | `static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)` | 将 `/media/` 映射到 `media/` 文件夹              |
+# | `if settings.DEBUG:`                                         | 仅在开发环境启用（生产环境由 Nginx/Apache 处理） |
+# 配置静态文件服务（开发环境）
+# 浏览器可以直接访问：http://127.0.0.1:8000/media/covers/1/cover.jpg
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

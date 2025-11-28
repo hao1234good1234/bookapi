@@ -117,6 +117,7 @@ class BookDetail(RetrieveUpdateDestroyAPIView):
 # BookViewSet 合并了 `BookListCreate` 和 `BookDetail`
 class BookViewSet(ModelViewSet):
     queryset = Book.objects.all()
+    # ✅ 默认情况下，`ModelViewSet` 已经支持文件上传！只要你在 `serializer_class` 中正确处理了 `FileField`，就能接收 POST 请求中的文件。
     serializer_class = BookSerializer
     pagination_class = StandardResultsSetPagination # 指定自定义分页类，如果全局设置了分页，这里会 **覆盖全局设置**！
     filterset_class = BookFilter   # 使用自定义的过滤器
@@ -153,10 +154,9 @@ class BookViewSet(ModelViewSet):
             return Book.objects.none()
         # 如果你的 `Book` 模型经常需要显示 `owner.username`，可以优化数据库查询：
         # `select_related('owner')` 会在一次 SQL 中 JOIN 用户表，避免 N+1 查询问题。
-        queryset = Book.objects.select_related('owner') # 减少数据库查询次数
         if self.request.user.is_staff:
-            return queryset
-        return queryset.filter(owner = self.request.user)
+            return Book.objects.select_related('owner') # 减少数据库查询次数
+        return Book.objects.filter(owner = self.request.user)
 
     # === 1. 过滤字段（支持 ?author=张三&price=39.90）===
     # **作用**：允许客户端通过 URL 参数 **精确匹配** 这两个字段
