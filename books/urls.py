@@ -5,11 +5,11 @@ from rest_framework.routers import DefaultRouter
 
 # - `DefaultRouter()`：自动生成标准 RESTful 路由
 # - `router.register(r'books', views.BookViewSet)`：注册后，自动创建：
-#   - `GET /books/`
-#   - `POST /books/`
-#   - `GET /books/1/`
-#   - `PUT /books/1/`
-#   - `DELETE /books/1/`
+#   - `GET /api/books/`
+#   - `POST /api/books/`
+#   - `GET /api/books/1/`
+#   - `PUT /api/books/1/`
+#   - `DELETE /api/books/1/`
 #   - 还有额外的 API 文档页面！
 
 
@@ -19,7 +19,7 @@ router = DefaultRouter()
 # `router.register()`：注册 ViewSet 到某个前缀
 #`r'books'` 是原始字符串，避免转义问题
 # **不要写成 `'books/'`**（结尾不要 `/`）
-router.register(r'books', viewset=views.BookViewSet)
+router.register(r'books', viewset=views.BookViewSet) #将 `BookViewSet` 注册到 `/api/books/`
 router.register(r'authors', viewset=views.AuthorViewSet)
 router.register(r'tags', viewset=views.TagViewSet)
 

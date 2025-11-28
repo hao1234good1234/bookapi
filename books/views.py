@@ -15,6 +15,7 @@ from rest_framework.permissions import IsAuthenticatedOrReadOnly # 登录用户�
 from rest_framework.permissions import IsAdminUser # 只允许管理员访问
 from .permissions import IsOwnerOrReadonly
 from .throttling import AdminUserThrottle
+from .exceptions import HighlightedBookCannotBeDeletedError, CoverImageTooLargeError
 
 
 
@@ -27,6 +28,8 @@ from .throttling import AdminUserThrottle
 # 必须加装饰器才能用 DRF 的 request/response
 @api_view(['GET', 'POST'])
 def book_list(request):
+    # raise Exception("人为制造服务器错误")
+
     # ====== 打印请求信息（调试用）======
     print("\n" + "=" * 50)
     print("当前请求的方法：", request.method)
@@ -174,7 +177,10 @@ class BookViewSet(ModelViewSet):
     # > - `^title` → 以...开头（startswith）
     # > - `=title` → 精确匹配（exact）
     # > - `@title` → 全文搜索（需 PostgreSQL）
-    search_fields = ['title', 'author']
+    # search_fields = ['title', 'author']
+
+    #因为 author 是 Author 模型对象，不能直接用 icontains。对外键字段要指定具体子字段，跨表查询要用双下划线 `__`，如：“author__name”
+    search_fields = ['title', 'author__name']
 
     # === 3. 排序字段（支持 ?ordering=price 或 ?ordering=-price）===
     # **作用**：允许客户端按这些字段排序
@@ -206,6 +212,7 @@ class BookViewSet(ModelViewSet):
         return Response(serializer.data)
 
 
+    # post请求：为某本书加高亮
     # 最终 URL：`/api/books/1/highlight/`
     # `detail=True`表示这个操作 **针对单个对象** → URL 会包含 `/pk/`
     # `pk=None` → DRF 会自动从 URL 中提取 `pk`（比如 `1`），并传进来
@@ -224,6 +231,52 @@ class BookViewSet(ModelViewSet):
         # 3. 返回更新后的数据
         serializer = self.get_serializer(book)
         return Response(serializer.data, status= status.HTTP_200_OK)
+
+
+    # 路由自动注册，只要注册了 `ViewSet`，DRF 会自动把 `@action` 映射到 URL
+    # 自动映射的URL：http://127.0.0.1:8000/api/books/highlighted/
+    # `@action(detail=False, methods=['get'])`：
+    # - `detail=False`：表示这是一个 **列表级操作**（作用于整个集合），不是单个对象
+    # - `methods=['get']`：只允许 GET 请求（也可以是 `['post']`、`['put']` 等）
+    # - 如果写 `detail=True`，则作用于某个具体对象，比如 `/books/1/highlight/`
+    @action(detail=False, methods=['get'])
+    def highlighted(self, request):
+        # 过滤出is_highlighted=True的书籍
+        # `self.get_queryset()`：安全获取当前查询集，支持分页、过滤等（即 `Book.objects.all()`）
+        # - 可以安全地进行过滤、排序等操作
+        highlighted_books = self.get_queryset().filter(is_highlighted=True)
+        # 使用当前视图的序列化器，避免重复代码：
+        # `self.get_serializer(..., many=True)`：
+        # - 使用当前视图的序列化器（`BookSerializer`）
+        # - `many=True`：因为返回多个对象
+        serializer = self.get_serializer(highlighted_books, many=True)
+        # 返回响应
+        return Response(serializer.data)
+
+    # 模糊搜索图书书名（包含）
+    # URL: GET http://127.0.0.1:8000/api/books/search/?q=水浒传
+    @action(detail=False, methods=['get'])
+    def search(self, request):
+        q = request.query_params.get('q')
+        if not q:
+            return Response({"error": "请提供搜索关键词"}, status=status.HTTP_400_BAD_REQUEST)
+        results = self.queryset.filter(title__icontains=q)
+        serializer = self.get_serializer(results, many=True)
+        return Response(serializer.data)
+
+    # 测试删除高亮图书时报自定义异常
+    def destroy(self, request, *args, **kwargs):
+        book = self.get_object()
+        if book.is_highlighted:
+            raise HighlightedBookCannotBeDeletedError()
+        return super().destroy(request, *args, **kwargs)
+    # 测试创建图书时传入过大的图片报自定义异常
+    def create(self, request, *args, **kwargs):
+        cover = request.FILES.get('cover_image')
+        if cover and cover.size > 5 * 1024 * 1024:   # 5MB
+            raise CoverImageTooLargeError()
+        return super().create(request, *args, **kwargs)
+
 
 # author对应的viewset
 class AuthorViewSet(ModelViewSet):

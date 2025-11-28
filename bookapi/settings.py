@@ -129,9 +129,10 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# DRF设置全局分页，所有 ViewSet 自动生效。
-# 这样设置后，**所有继承 `ListModelMixin` 的视图**（如 `ModelViewSet`）都会自动分页！
+
 REST_FRAMEWORK = {
+    # DRF设置全局分页，所有 ViewSet 自动生效。
+    # 这样设置后，**所有继承 `ListModelMixin` 的视图**（如 `ModelViewSet`）都会自动分页！
     # Web 网站（页码导航）设置分页
     # http://127.0.0.1:8000/api/books/
     'DEFAULT_PAGINATION_CLASS': "rest_framework.pagination.PageNumberPagination", #指定默认分页类
@@ -182,9 +183,10 @@ REST_FRAMEWORK = {
         'user': '10/minute',# 登录用户每分钟10次
         # 管理员可以高速访问
         # 'admin': '1000/minute', #管理员每分钟1000次
-
-
     },
+
+    # 注册自定义异常处理器：`'EXCEPTION_HANDLER'`：告诉 DRF 使用我们写的函数处理所有异常
+    'EXCEPTION_HANDLER': 'bookapi.exceptions.custom_exception_handler',
 
 }
 

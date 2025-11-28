@@ -98,7 +98,7 @@ class BookSerializer(serializers.ModelSerializer):
     # 新增：处理图片字段，实现“输入用 cover_image，输出用 cover_image_url”的分离设计
     # 用自定义方法返回图片信息（如 URL）
     # put/post请求需要的字段：请求时需要上传参数为cover_image的图片文件
-    cover_image = serializers.ImageField(write_only=True)
+    cover_image = serializers.ImageField(write_only=True, required=False)
     # get请求返回的字段：请求返回时返回的字段名为cover_image_url
     cover_image_url = serializers.SerializerMethodField() # ← 自定义方法get_cover_image_url输出该字段
 
@@ -197,12 +197,6 @@ class BookSerializer(serializers.ModelSerializer):
         return instance
 
     # create 和 update 可以省略！DRF 默认行为已经足够， 除非你要做特殊处理（如删除旧文件），✅ 因为 `ModelSerializer` 默认就能处理 `FileField`/`ImageField` 的上传和保存！
-
-
-
-
-
-
 
     # 添加自定义校验逻辑
     # def validate_price(self, value):`
