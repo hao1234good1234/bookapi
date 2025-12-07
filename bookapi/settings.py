@@ -14,6 +14,7 @@ from pathlib import Path
 from datetime import timedelta
 import os
 
+from drf_spectacular.settings import SPECTACULAR_DEFAULTS, spectacular_settings
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -44,6 +45,8 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt', #配置 Django 启用 JWT
     'django_filters', #配置 Django 启用 django_filters
     'books', # 配置自定义的app
+    'drf_spectacular', # 配置 drf_spectacular，可以使用OpenAPI 3.0
+
 ]
 
 MIDDLEWARE = [
@@ -166,7 +169,7 @@ REST_FRAMEWORK = {
     # `'DEFAULT_THROTTLE_CLASSES'`设置全局使用的限流类 只有被列出的限流类才会生效
     'DEFAULT_THROTTLE_CLASSES': [
         # `'AnonRateThrottle'`匿名用户限流类 对未登录用户生效⚠️ 需配合 `DEFAULT_THROTTLE_RATES`
-        'rest_framework.throttling.AnonRateThrottle', # 匿名用户限流
+        # 'rest_framework.throttling.AnonRateThrottle', # 匿名用户限流
 
         # `'UserRateThrottle'`登录用户限流类 对已登录用户生效✅ 常用于普通用户
         # 'rest_framework.throttling.UserRateThrottle', # 登录用户限流
@@ -187,6 +190,12 @@ REST_FRAMEWORK = {
 
     # 注册自定义异常处理器：`'EXCEPTION_HANDLER'`：告诉 DRF 使用我们写的函数处理所有异常
     'EXCEPTION_HANDLER': 'bookapi.exceptions.custom_exception_handler',
+    # 确保 drf-spectacular 是唯一的 schema 提供者
+    # 这一行告诉 DRF：“请用 drf-spectacular 提供的 AutoSchema 来生成 API 文档”。
+    # 如果不写这行，DRF 可能会继续使用自己的 schema 类，导致冲突。
+    # 即使你已经安装了 drf-spectacular，也必须显式设置这个值！
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema', # ← 必须显式指定！
+
 
 }
 
@@ -209,3 +218,11 @@ SIMPLE_JWT = {
 MEDIA_URL = '/media/'  # 前端访问时用的URL路径
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')  # 实际文件存储路径
 
+# dsf-spectacular 配置
+SPECTACULAR_SETTINGS = {
+    'TITLE': '图书管理系统API',
+    'DESCRIPTION': '这是一个用于管理图书信息的RESTful API.',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,  # 是否在文档页面显示schema
+    'COMPONENT_SPLIT_REQUEST': True,  # 将请求和响应参数分开定义（更清晰）
+}

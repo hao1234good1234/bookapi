@@ -16,8 +16,10 @@ from rest_framework.permissions import IsAdminUser # 只允许管理员访问
 from .permissions import IsOwnerOrReadonly
 from .throttling import AdminUserThrottle
 from .exceptions import HighlightedBookCannotBeDeletedError, CoverImageTooLargeError
-
-
+from bookapi.utils import success_response,error_response
+from books.error_codes import VALIDATION_ERROR
+from bookapi.mixins import UnifiedResponseMixin
+from drf_spectacular.utils import extend_schema
 
 
 # 这个是函数视图（Function-based Views (FBV) ），函数视图用@api_view()
@@ -49,7 +51,8 @@ def book_list(request):
         print("【序列化】data =", serializer.data)  # 已转成列表
         # 返回JSON数据
         # 这是序列化后的 Python 字典（或列表），DRF 会自动转成 JSON。
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        # return Response(serializer.data, status=status.HTTP_200_OK)
+        return success_response(data=serializer.data, status=status.HTTP_200_OK)
     elif request.method == 'POST':
         # 接收前端发来的json数据
         serializer = BookSerializer(data=request.data)
@@ -62,10 +65,16 @@ def book_list(request):
             # 自动调用 `create()` 方法，把数据存进数据库。
             serializer.save()
             # 返回成功响应（带新数据）
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            # return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return success_response(data=serializer.data, status=status.HTTP_201_CREATED)
         # 如果验证失败，返回错误信息
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
+        # return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return error_response(
+            error_code=VALIDATION_ERROR,
+            message="请求参数有误",
+            details=serializer.errors,
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
 # 这个是类视图（Class-based Views (CBV) —— 类视图（更优雅））
 # 用类代替函数，自动处理不同 HTTP 方法
@@ -83,16 +92,22 @@ class BookList(APIView):
     def get(self, request):
         books = Book.objects.all()
         serializer = BookSerializer(books, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
+        # return Response(serializer.data, status=status.HTTP_200_OK)
+        return success_response(data=serializer.data, status=status.HTTP_200_OK)
     # 自动处理 POST 请求
     def post(self, request):
         serializer = BookSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
+            # return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return success_response(data=serializer.data, status=status.HTTP_201_CREATED)
+        # return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return error_response(
+            error_code=VALIDATION_ERROR,
+            message="请求参数有误",
+            details=serializer.errors,
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
 # 这个是通用视图（Generic Views），DRF 提供了 **预制好的类**，帮你自动完成常见操作。
 # | `ListAPIView`                  | 只读列表（GET）            |
@@ -101,7 +116,7 @@ class BookList(APIView):
 # | `RetrieveUpdateDestroyAPIView` | 详情 + 修改 + 删除         |
 
 # **不需要写 get/post 方法！** DRF 自动处理
-class BookListCreate(ListCreateAPIView):
+class BookListCreate(UnifiedResponseMixin,ListCreateAPIView):
     queryset = Book.objects.all()  # 数据源 告诉 DRF “从哪取数据”
     serializer_class = BookSerializer  # 使用哪个序列化器 告诉 DRF “用哪个 Serializer”
 
@@ -109,10 +124,12 @@ class BookListCreate(ListCreateAPIView):
 # 实现单个图书详情（Retrieve/Update/Delete 获取，修改，删除）
 # - `RetrieveUpdateDestroyAPIView` 自动支持 GET/PUT/DELETE
 # - 默认通过 `pk`（主键）查找对象，所以 URL 要带 `<int:pk>`
-class BookDetail(RetrieveUpdateDestroyAPIView):
+class BookDetail(UnifiedResponseMixin,RetrieveUpdateDestroyAPIView):
     queryset = Book.objects.all()
     serializer_class = BookSerializer
     # DRF 自动根据 URL 中的 pk 查找对象
+
+
 
 
 # 这个是ModelViewSet
@@ -130,18 +147,15 @@ class BookViewSet(ModelViewSet):
     # permission_classes = [IsAuthenticated]  # 强制登录才能访问，告诉 DRF：只有登录用户才能调用这个 ViewSet 的任何操作
     # permission_classes = [IsAuthenticatedOrReadOnly] # ← 匿名可读，登录可写
     # permission_classes = [IsAdminUser] # 只允许管理员访问
-    # permission_classes = [
-    #     IsAuthenticated,            # 先检查是否登录
-    #     IsOwnerOrReadonly,          # 再检查是否是作者
-    # ]
     permission_classes = [
-        IsAuthenticatedOrReadOnly,   # 未登录
-        # IsOwnerOrReadonly,  # 再检查是否是作者
+        IsAuthenticated,            # 先检查是否登录
+        IsOwnerOrReadonly,          # 再检查是否是作者
     ]
+    # permission_classes = [
+    #     IsAuthenticatedOrReadOnly,   # 未登录
+    # ]
 
-    # throttle_classes = [AdminUserThrottle]  # 使用自定义限流类
-
-
+    throttle_classes = [AdminUserThrottle]  # 使用自定义限流类
 
     # 如何在创建图书时自动设置owner
     # `perform_create` 是 DRF 提供的钩子方法，在保存对象前调用。
@@ -209,14 +223,21 @@ class BookViewSet(ModelViewSet):
         # - 自动使用你在类中定义的 `serializer_class = BookSerializer`
         # - 比直接写 `BookSerializer(...)` 更灵活（支持动态切换）
         serializer = self.get_serializer(recent_books, many=True)
-        return Response(serializer.data)
-
-
+        # return Response(serializer.data)
+        return success_response(data=serializer.data, message="获取最近图书成功")
+    # 在 DRF ViewSet 中，**装饰器顺序很重要**。 你应该把 `@extend_schema` 放在 **最外层**，即 **在 `@action` 之上**，而不是之下！
+    #  **`@action` 是一个装饰器，它会生成一个新的路由方法。如果你把 `@extend_schema` 放在它下面，drf-spectacular 就无法捕获到这个方法的元数据。**
+    @extend_schema(
+        summary="给某本书加高亮",  # 短标题，显示在接口列表中。
+        description="将指定图书的is_highlighted 字段设为true",  # 详细说明。
+        responses={200: BookSerializer}  # 指定可能的响应类型和数据结构。
+    )
     # post请求：为某本书加高亮
     # 最终 URL：`/api/books/1/highlight/`
     # `detail=True`表示这个操作 **针对单个对象** → URL 会包含 `/pk/`
     # `pk=None` → DRF 会自动从 URL 中提取 `pk`（比如 `1`），并传进来
     @action(detail=True, methods=['post'])
+
     def highlight(self, request, pk=None):
         """
         给某本书加上高亮
@@ -230,7 +251,8 @@ class BookViewSet(ModelViewSet):
         book.save() # 别忘了保存到数据库
         # 3. 返回更新后的数据
         serializer = self.get_serializer(book)
-        return Response(serializer.data, status= status.HTTP_200_OK)
+        # return Response(serializer.data, status= status.HTTP_200_OK)
+        return success_response(serializer.data, message="给某本书添加高亮成功")
 
 
     # 路由自动注册，只要注册了 `ViewSet`，DRF 会自动把 `@action` 映射到 URL
@@ -251,7 +273,8 @@ class BookViewSet(ModelViewSet):
         # - `many=True`：因为返回多个对象
         serializer = self.get_serializer(highlighted_books, many=True)
         # 返回响应
-        return Response(serializer.data)
+        # return Response(serializer.data)
+        return success_response(serializer.data, message="获取高亮图书成功")
 
     # 模糊搜索图书书名（包含）
     # URL: GET http://127.0.0.1:8000/api/books/search/?q=水浒传
@@ -259,32 +282,51 @@ class BookViewSet(ModelViewSet):
     def search(self, request):
         q = request.query_params.get('q')
         if not q:
-            return Response({"error": "请提供搜索关键词"}, status=status.HTTP_400_BAD_REQUEST)
+            # return Response({"error": "请提供搜索关键词"}, status=status.HTTP_400_BAD_REQUEST)
+            return error_response(
+                error_code=VALIDATION_ERROR,
+                message="没有搜索关键词",
+                details="没有搜索关键词",
+                status=status.HTTP_400_BAD_REQUEST
+            )
         results = self.queryset.filter(title__icontains=q)
         serializer = self.get_serializer(results, many=True)
-        return Response(serializer.data)
+        # return Response(serializer.data)
+        return success_response(data=serializer.data, message="根据关键词搜索成功")
 
     # 测试删除高亮图书时报自定义异常
     def destroy(self, request, *args, **kwargs):
         book = self.get_object()
         if book.is_highlighted:
             raise HighlightedBookCannotBeDeletedError()
-        return super().destroy(request, *args, **kwargs)
+        response = super().destroy(request, *args, **kwargs)
+        return success_response(data=response.data, message="图书删除成功", status=status.HTTP_204_NO_CONTENT)
     # 测试创建图书时传入过大的图片报自定义异常
     def create(self, request, *args, **kwargs):
         cover = request.FILES.get('cover_image')
         if cover and cover.size > 5 * 1024 * 1024:   # 5MB
             raise CoverImageTooLargeError()
-        return super().create(request, *args, **kwargs)
+        response = super().create(request, *args, **kwargs)
+        return success_response(data=response.data, message="图书创建成功", status=status.HTTP_201_CREATED)
 
+    # 重写list方法
+    def list(self, request, *args, **kwargs):
+        response = super().list(request, *args, **kwargs)
+        return success_response(data=response.data, message="图书列表获取成功")
 
+    def retrieve(self, request, *args, **kwargs):
+        response = super().retrieve(request, *args, **kwargs)
+        return success_response(data=response.data, message="图书详情获取成功")
+    def update(self, request, *args, **kwargs):
+        response = super().update(request, *args, **kwargs)
+        return success_response(data=response.data)
 # author对应的viewset
-class AuthorViewSet(ModelViewSet):
+class AuthorViewSet(UnifiedResponseMixin, ModelViewSet):
     queryset = Author.objects.all()
     serializer_class = AuthorSerializer
 
 
-class TagViewSet(ModelViewSet):
+class TagViewSet(UnifiedResponseMixin, ModelViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
 

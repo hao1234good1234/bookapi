@@ -20,6 +20,17 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from . import views # 导入当前目录的 views
 from django.conf import settings
 from django.conf.urls.static import static
+from rest_framework.routers import DefaultRouter
+from books.views import BookViewSet, AuthorViewSet, TagViewSet
+from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
+
+
+# 创建路由器实例
+router = DefaultRouter()
+router.register(r'books', BookViewSet)
+router.register(r'authors', AuthorViewSet)
+router.register(r'tags', TagViewSet)
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     # path('api/hello', views.hello_api), #新增api路由
@@ -39,7 +50,10 @@ urlpatterns = [
     # 登出页面
     path('logout/', views.user_logout, name='logout'),
 
+    path('api/schema/', SpectacularAPIView.as_view(), name='schema'), # openapi json接口，提供 `/api/schema/` 接口，返回 JSON 格式的 OpenAPI 规范。
 
+    path('api/schema/swagger-ui/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'), #swagger ui页面，提供一个图形化的 Swagger UI 页面，用户可以在线测试接口。`url_name='schema'`：指向前面定义的 `schema` 路由名，确保两个视图能正确关联。
+    path('', include(router.urls)),   # ← 包含所有视图集路由
 
 ]
 

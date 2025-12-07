@@ -137,7 +137,7 @@ class BookSerializer(serializers.ModelSerializer):
                 return request.build_absolute_uri(obj.cover_image.url)
             else:
                 # 没有 request 上下文时，只返回相对路径 /media/...
-                return obj.cover_image.url
+                return obj.cover_image.url if obj.cover_image else None
         return None
 
 
