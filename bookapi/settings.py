@@ -226,3 +226,53 @@ SPECTACULAR_SETTINGS = {
     'SERVE_INCLUDE_SCHEMA': False,  # 是否在文档页面显示schema
     'COMPONENT_SPLIT_REQUEST': True,  # 将请求和响应参数分开定义（更清晰）
 }
+
+# 生产环境部署
+# 1. 设置 DEBUG = False （生产环境必须关闭）
+# DEBUG = False
+# 2. 允许的主机域名（生产环境必须设置）
+# ALLOWED_HOSTS = ['your-domain.com', 'www.your-domain.com', '127.0.0.1'] # 替换为你的实际域名ip
+# 3.数据库配置（建议使PostgreSQL 或 MySQL）
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'bookapi_db',
+#         'USER': 'bookapi_user',
+#         'PASSWORD': 'your-strong-password',
+#         'HOST': 'localhost',
+#         'PORT': '5432',
+#     }
+# }
+# 4. 静态文件配置（用于 Nginx 提供静态资源）
+# STATIC_URL = '/static/'
+# STATIC_ROOT = BASE_DIR / 'staticfiles' # 存放收集后的静态文件
+# 5. 媒体文件配置（上传的图片等）
+# MEDIA_URL = '/media/'
+# MEDIA_ROOT = BASE_DIR / 'media' # 存放用户上传的文件
+# 6. CSRF 安全设置（生产环境建议开启）
+# CSRF_COOKIE_SECURE = True # https环境下启用
+# CSRF_COOKIE_HTTPONLY = True # 防止XSS攻击
+# CSRF_TRUSTED_ORIGINS = ['https://your-domain.com'] # 只允许特定域名发起请求
+# 7. Session 安全设置
+# SESSION_COOKIE_SECURE = True
+# SESSION_COOKIE_HTTPONLY = True
+# SESSION_COOKIE_SAMESITE = 'Lax'
+# 8. 密钥设置（不要硬编码！ 建议用环境变量）
+# SECRET_KEY = 'your-very-secret-key-here' # 生产环境必须设置强密钥
+# 9. CORS 设置（如果需要跨域）
+# INSTALLED_APPS = [
+#     # 其他应用。。。
+#     'corsheaders', # 如果你安装了corsheaders
+# ]
+# MIDDLEWARE = [
+#     #。。。其他中间件
+#     'corsheaders.middleware.CorsMiddleware',  # 必须放在最前面
+#
+# ]
+
+# 10. cors配置
+# CORS_ALLOWED_ORIGINS = [
+#     'https://frontend.your-domain.com',  # 前端域名
+#     'http://localhost:3000',             # 开发时本地测试
+# ]
+# CORS_ALLOW_ALL_ORIGINS = False  # 不允许所有来源（安全建议）
